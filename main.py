@@ -1,53 +1,75 @@
-import os
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
+import datetime
+from youtube_api import get_authenticated_service, get_video_by_index, get_playlist_name
+from ui import display_video_info, main_menu
+from data import load_data, save_data
 
-# Scope gives access to read/modify your YouTube playlists
-SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+def main():
+    data = load_data()
+    last_added = data.get("last_added", "Never")
+    dest_playlist_id = data.get("dest_playlist_id")
 
-# Files to store OAuth credentials
-TOKEN_FILE = "token.json"      # saved access & refresh tokens
-CREDS_FILE = "credentials.json" # client secrets from Google Cloud
+    youtube = get_authenticated_service()
+    source_playlist_id = "PLP4CSgl7K7or84AAhr7zlLNpghEnKWu2c"
 
-creds = None
+    current_index = 0;
 
-# Load saved credentials if they exist to avoid logging in every time
-if os.path.exists(TOKEN_FILE):
-    creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+    video = get_video_by_index(youtube, source_playlist_id, current_index)
 
-# If no valid credentials, refresh them or run OAuth login flow
-if not creds or not creds.valid:
-    # If creds exist but expired, refresh automatically
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
+    # set playlist name safely
+    if dest_playlist_id:
+        try:
+            playlist_name = get_playlist_name(youtube, dest_playlist_id)
+        except Exception:
+            playlist_name = "Invalid playlist"
+            dest_playlist_id = None
     else:
-        # Run OAuth flow in browser (first-time login)
-        flow = InstalledAppFlow.from_client_secrets_file(CREDS_FILE, SCOPES)
-        creds = flow.run_local_server(port=0)
+        playlist_name = "Not set"
 
-    # Save credentials for next time so we don't have to log in again
-    with open(TOKEN_FILE, "w") as token:
-        token.write(creds.to_json())
+    while True:
+        display_video_info(current_index, video, playlist_name, last_added)
+        main_menu()
+        choice = input("Select an option: ")
 
-# Build YouTube API client with authenticated credentials
-youtube = build("youtube", "v3", credentials=creds)
+        if choice == "1":
+            if not dest_playlist_id:
+                print("Set a destination playlist first.")
+            else:
+                print("Adding BEST tracks... (not implemented yet)")
+                last_added = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
+                data["last_added"] = last_added
+                save_data(data)
 
-# Playlist ID you want to track (Fantano playlist in this case)
-playlist_id = "PLP4CSgl7K7or84AAhr7zlLNpghEnKWu2c"
+        elif choice == "2":
+            print("Browsing MEH/WORSE tracks...")
 
-# Prepare API request to get the latest video from the playlist
-request = youtube.playlistItems().list(
-    part="snippet",       # Get video info like title, publish date, thumbnails
-    playlistId=playlist_id,
-    maxResults=1          # Only fetch the most recent video
-)
-response = request.execute()  # Execute the API request
+        elif choice == "3":  # Load previous roundup
+            current_index += 1
+            video = get_video_by_index(youtube, source_playlist_id, current_index)
+            
+            if not video:
+                print("No more previous videos.")
+                current_index -= 1  # stay at last valid
 
-# Extract snippet info from the first (latest) video
-video = response["items"][0]["snippet"]
+        elif choice == "4":
+            new_id = input("Enter playlist ID: ").strip()
+            if new_id:
+                try:
+                    playlist_name = get_playlist_name(youtube, new_id)
+                    dest_playlist_id = new_id
+                    data["dest_playlist_id"] = new_id
+                    save_data(data)
+                except Exception:
+                    print("Invalid playlist ID.")
 
-print("Title:", video["title"])
-print("Published at:", video["publishedAt"])
-print("Video ID:", video["resourceId"]["videoId"])
+        elif choice == "5":
+            print("Exiting...")
+            break
+
+        else:
+            print("Invalid choice, try again.")
+
+        print("\n")
+
+if __name__ == "__main__":
+    main()
