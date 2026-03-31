@@ -208,4 +208,5 @@ __marimo__/
 
 # Personal credentials and notes
 credentials.json
+app_data.json
 notes.docx
