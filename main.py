@@ -93,7 +93,7 @@ def main():
                             print(f"Skipped (already added this session): {t['title']}")
 
                 # Update last added timestamp
-                last_added = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                last_added = datetime.datetime.now().strftime("%b %d, %Y")  # e.g., Mar 31, 2026
                 data["last_added"] = last_added
                 save_data(data)
 

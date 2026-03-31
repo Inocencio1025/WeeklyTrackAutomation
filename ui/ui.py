@@ -4,6 +4,8 @@ import datetime
 # =========================
 # DISPLAY / UI
 # =========================
+from datetime import datetime  # <-- add this at top of file
+
 def display_video_info(index, video, playlist_name, last_added):
     """
     Print formatted information about a video.
@@ -14,11 +16,18 @@ def display_video_info(index, video, playlist_name, last_added):
         playlist_name: Name of the playlist the video belongs to
         last_added: Timestamp or label for when it was last used
     """
-    print(f"\n[{index + 1}] - Title: {video['title']}")
-    print(f"Published at: {video['publishedAt']}")
+    raw_date = video.get("publishedAt")
+
+    if raw_date:
+        dt = datetime.strptime(raw_date, "%Y-%m-%dT%H:%M:%SZ")
+        formatted_date = dt.strftime("%b %d, %Y")
+    else:
+        formatted_date = "Unknown"
+
+    print(f"\n[{index + 1}] - Title: {video.get('title', 'Unknown')}")
+    print(f"Published at: {formatted_date}")
     print(f"Last used: {last_added}")
     print(f"Playlist: {playlist_name}\n")
-
 
 def main_menu():
     """
