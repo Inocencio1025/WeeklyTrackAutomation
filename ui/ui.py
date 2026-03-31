@@ -1,11 +1,10 @@
 import datetime
 
 def display_video_info(index, video, playlist_name, last_added):
-    print(f"Index: {index}")
-    print(f"Title: {video['title']}")
+    print(f"[{index}] - Title: {video['title']}")
     print(f"Published at: {video['publishedAt']}")
-    print(f"Playlist: {playlist_name}")
-    print(f"Last time best tracks added: {last_added}\n")
+    print(f"Last time best tracks added: {last_added}")
+    print(f"Playlist: {playlist_name}\n")
 
 def main_menu():
     print("1. Add BEST tracks")

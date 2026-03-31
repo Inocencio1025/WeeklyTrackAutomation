@@ -1,4 +1,5 @@
 import os
+import re
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -30,9 +31,8 @@ def get_authenticated_service():
     return build("youtube", "v3", credentials=creds)
 
 
-def add_video_to_playlist(youtube, playlist_id, video_id):
-    """Adds a video to a playlist"""
-    request = youtube.playlistItems().insert(
+def add_to_playlist(youtube, playlist_id, video_id):
+    youtube.playlistItems().insert(
         part="snippet",
         body={
             "snippet": {
@@ -43,8 +43,7 @@ def add_video_to_playlist(youtube, playlist_id, video_id):
                 }
             }
         }
-    )
-    return request.execute()
+    ).execute()
 
 def get_playlist_name(youtube, playlist_id):
     request = youtube.playlists().list(
@@ -81,3 +80,8 @@ def get_video_by_index(youtube, playlist_id, index):
             break
 
     return None  # index out of range
+
+
+def extract_video_id(url):
+    match = re.search(r"v=([a-zA-Z0-9_-]+)", url)
+    return match.group(1) if match else None
